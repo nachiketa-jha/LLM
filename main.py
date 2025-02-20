@@ -61,4 +61,20 @@ class BigramLanguageModel(nn.Module):
         return loss, logits
 
 
+    def generate(self, index, max_new_tokens):
+        for _ in range(max_new_tokens):
+            logits, loss = self.forward(index)
+            logits = logits[:,-1,:] 
+            probability = F.softmax(logits, dim = -1)
+            index_next = torch.multinomial(probability, num_samples=1)
+            index = torch.cat((index, index_next), dim=1)
+        return index
+
+model = BigramLanguageModel(vocab_size)
+m=model.to(device)
+
+context = torch.zeros((1,1), dtype = torch.long, device=device)
+generated_chars = decode(m.generate(context, max_new_tokens=500)[0].tolist())
+print(generated_chars)
+
 

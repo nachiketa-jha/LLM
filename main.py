@@ -1,8 +1,7 @@
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
-device = 'cuda' if torch.cuda.is_available else 'cpu'
-print(device)
+device = 'cpu'
 
 
 block_size = 8
@@ -29,7 +28,7 @@ def get_batch(split):
     ix=torch.randint(len(data) - block_size, (batch_size,))
     x= torch.stack([data[i:i+block_size]for i in ix])
     y= torch.stack([data[i:i+block_size+1]for i in ix])
-    x, y = x.to(device), y.to(device)
+    return x.to(device), y.to(device)
 
 
 x, y = get_batch('train')
@@ -45,14 +44,14 @@ for t in range(block_size):
 
 class BigramLanguageModel(nn.Module):
     def __init__(self, vocab_size):
-        super().__init__
+        super().__init__()
         self.token_embedding_table = nn.Embedding(vocab_size, vocab_size)
 
-    def forward_pass(self, index, targets):
+    def forward(self, index, targets=None):
+        logits = self.token_embedding_table(index)
         if targets is None:
             loss = None
         else:
-            logits = self.token_embedding_table(index)
             B,T,C = logits.shape
             logits = logits.view(B*T, C)
             targets = targets.view(B*T)
@@ -64,7 +63,7 @@ class BigramLanguageModel(nn.Module):
     def generate(self, index, max_new_tokens):
         for _ in range(max_new_tokens):
             logits, loss = self.forward(index)
-            logits = logits[:,-1,:] 
+            logits = logits[:, -1, :] 
             probability = F.softmax(logits, dim = -1)
             index_next = torch.multinomial(probability, num_samples=1)
             index = torch.cat((index, index_next), dim=1)

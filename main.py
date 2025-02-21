@@ -59,7 +59,6 @@ class BigramLanguageModel(nn.Module):
         
         return loss, logits
 
-
     def generate(self, index, max_new_tokens):
         for _ in range(max_new_tokens):
             logits, loss = self.forward(index)
